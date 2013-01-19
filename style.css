@@ -39,10 +39,6 @@ table td {
 	border-radius: 10px;
 }
 
-.tracks-hover {
-	/*background: #cdecff;*/
-}
-
 .tracks .help {
 	position: absolute;
 	bottom: 0;
@@ -54,17 +50,17 @@ table td {
 	color: #bbb;
 }
 
-.track {
-	position: relative;
-	background: #e9ffe7;
-	border: 1px solid #eee;
-	border-radius: 10px;
-	padding: 0 40px;
-	margin: 0 0 2px;
+.tracks-hover .help {
+	color: #333;
 }
 
-.track ~ .track {
+.track {
+	position: relative;
 	background: #fafafa;
+	border: 1px solid #eee;
+	border-radius: 10px;
+	padding: 0 40px 5px 60px;
+	margin: 0 0 2px;
 }
 
 .track h2 {
@@ -72,16 +68,21 @@ table td {
 	line-height: 1;
 	margin: 0 0 5px;
 }
+
 .track:before {
 	counter-increment: track;
 	content: counter(track);
 	position: absolute;
 	top: 0;
 	left: 0;
-	width: 40px;
+	width: 50px;
 	font-size: 18px;
 	line-height: 40px;
 	text-align: center;
+}
+
+.track ~ .track:before {
+	background: none;
 }
 
 .toggle {
@@ -89,17 +90,24 @@ table td {
 	top: 10px;
 	right: 10px;
 	width: 20px;
-	font-size: 18px;
-	line-height: 20px;
+	font-size: 12px;
+	padding: 0;
 	text-align: center;
-	background: #aaa;
-	border-radius: 5px;
 	cursor: pointer;
+	border-radius: 2px;
+	background: -webkit-linear-gradient(#444,#333);
+	box-shadow: inset 0 0 0 1px rgba(0,0,0,.3), inset 0 2px 0 rgba(255,255,255,.3);
+	color: #fff;
+}
+
+.remove {
+	position: absolute;
+	top: 32px;
+	left: 5px;
 }
 
 .pattern {
-	margin: 10px 0;
-	min-height: 20px;
+	margin: 10px 0 5px;
 	border-radius: 2px;
 }
 
@@ -107,24 +115,38 @@ table td {
 	display: block;
 	content: "";
 	clear: both;
+	font-size: 11px;
+	color: #aaa;
+}
+
+.loading .pattern {
+	padding: 0 5px;
+}
+.loading > .pattern:after {
+	content: 'Loading...';
 }
 
 .pattern b {
 	float: left;
 	width: 6.25%;
 	height: 20px;
-	box-shadow: inset 0 0 0 1px rgba(0,0,0,.3);
+	box-shadow: inset 0 0 0 1px rgba(0,0,0,.3), inset 0 2px 0 rgba(255,255,255,.3);
 	background: #006db4;
 	border-radius: 2px;
 }
 
 .pattern b:hover {
-	opacity: .8;
+	opacity: .5;
 	cursor: pointer;
 }
 
 .main-pattern {
+	min-height: 20px;
 	box-shadow: inset 0 0 0 1px rgba(0,0,0,.3);
+}
+
+.all-beats b {
+	margin: 0 1px 1px 0;
 }
 
 .details {

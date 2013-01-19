@@ -19,6 +19,10 @@ var App = {
 			$(this).data('player').stop()
 			$(this).remove();
 		});
+
+		$(document).on('click', '.remove', function(){
+			$(this).parent().remove();
+		});
 	},
 	onDrop: function(event, ui) {
 		console.log('dropped', event, ui);
@@ -27,12 +31,16 @@ var App = {
 		if ( ! el.is('td') )
 			return;
 
-		//var obj = { id: el.data('id'), text: el.text(), bpm: el.data('bpm') };
-		var obj = { id: 'TRJTLOZ12F09775D41', analysis: 'http://echonest-analysis.s3.amazonaws.com/TR/TRJTLOZ12F09775D41/3/full.json?AWSAccessKeyId=AKIAJRDFEY23UEVW42BQ&Expires=1358611902&Signature=ZQONk8sdLZnVrsNVGNYOpN7qq1g%3D', file: 'remixjs/examples/audio/Karl_Blau-Gnos_Levohs.mp3', text: el.text(), bpm: el.data('bpm') };
+		var obj = { id: el.data('id'), analysis: el.data('url'), text: el.text(), bpm: el.data('bpm') };
+		//var obj = { id: 'TRJTLOZ12F09775D41', analysis: 'http://echonest-analysis.s3.amazonaws.com/TR/TRJTLOZ12F09775D41/3/full.json?AWSAccessKeyId=AKIAJRDFEY23UEVW42BQ&Expires=1358611902&Signature=ZQONk8sdLZnVrsNVGNYOpN7qq1g%3D', file: 'remixjs/examples/audio/Karl_Blau-Gnos_Levohs.mp3', text: el.text(), bpm: el.data('bpm') };
 
 		el.parents('tr').remove();
 		
-		App.addTrack(obj);
+		$.getJSON( '?access=' + el.data('file-id'), function(response){
+			obj.file = response.assets[0].url;
+			App.addTrack(obj);
+		});
+		//App.addTrack(obj);
 
 	},
 	onSort: function(event, ui) {
@@ -46,30 +54,23 @@ var App = {
 		e.preventDefault();
 
 		var term = $('#search').val(),
-			bpm = $('input[name=bpm]').val(),
-			bpmSearch = bpm != '' ? ( '&min_tempo=' + ( bpm - 1 ) + '&max_tempo=' + ( Math.round(bpm) + 1 ) ) : '';
+			bpm = $('input[name=bpm]').val();
+			//bpmSearch = bpm != '' ? ( '&min_tempo=' + ( bpm - 1 ) + '&max_tempo=' + ( Math.round(bpm) + 1 ) ) : '';
 
-		$.getJSON( 'http://developer.echonest.com/api/v4/song/search?bucket=id:emi_bluenote&bucket=audio_summary&bucket=tracks&api_key=' + App.key + '&format=jsonp&combined=' + encodeURI(term) + '&callback=?' + bpmSearch, App.onSearchResults );
-
+		//$.getJSON( 'http://developer.echonest.com/api/v4/song/search?bucket=id:emi_bluenote&bucket=audio_summary&bucket=tracks&api_key=' + App.key + '&format=jsonp&combined=' + encodeURI(term) + '&callback=?' + bpmSearch, App.onSearchResults );
+		$.getJSON('?search=' + term, App.onSearchResults);
 	},
 	onSearchResults: function(response) {
 		console.log('search', response);
 		var list = $('#result');
 
 		list.empty();
-		$.each(response.response.songs, function(){
+		//$.each(response.response.songs, function(){
+		$.each(response, function(){
 			console.log(this);
-			list.append('<tr><td data-url="' + this.audio_summary.analysis_url + '" data-bpm="' + Math.round( this.audio_summary.tempo ) + '" data-id="' + this.id + '">' + this.artist_name + ' - ' + this.title + ', BPM: ' + Math.round( this.audio_summary.tempo ) + '</td></tr>');
+			list.append('<tr><td data-url="' + this.audio_summary.analysis_url + '" data-bpm="' + Math.round( this.audio_summary.tempo ) + '" data-file-id="' + this.file_asset_id + '" data-id="' + this.id + '">' + this.artist + ' - ' + this.title + ', BPM: ' + Math.round( this.audio_summary.tempo ) + '</td></tr>');
 		});
 		list.find('td').draggable({ revert : 'invalid' });
-	},
-	onLoadClick: function() {
-		var id = $(this).data('id');
-		console.log('load', id);
-
-		$.getJSON( '?access=' + id, function(response){
-			console.log('access', response);
-		});
 	},
 	setBPM: function(bpm) {
 		$('#bpm').val(bpm);
@@ -83,7 +84,8 @@ var App = {
 			'<div class="pattern main-pattern"></div>',
 			'<div class="toggle">v</div>',
 			'<h2>' + obj.text + '</h2>',
-			details
+			details,
+			'<button class="remove btn btn-mini btn-danger">Delete</button>'
 		);
 		
 		el.find('.pattern:not(.all-beats)')
@@ -114,6 +116,7 @@ var App = {
 			el.track = t;
 
 			if (el.track.status == 'ok') {
+				el.removeClass('loading');
 				App.createBeats(el);
 			}
 		});
@@ -123,8 +126,8 @@ var App = {
 
 		var allBeats = el.find('.all-beats');
 		
-		for (var i = 0; i < el.track.analysis.beats.length; i++) {
-			var beat = el.track.analysis.beats[i],
+		for (var i = 0; i < el.track.analysis.bars.length; i++) {
+			var beat = el.track.analysis.bars[i],
 				beatEl = $('<b></b>')
 				.data('beat', beat)
 				.data('player', el.player)
@@ -140,7 +143,7 @@ var App = {
 
 			allBeats.append(beatEl);
 				
-			beatEl.css('background', 'hsl(' + beatEl.index() + ', 100%, 50%)');
+			beatEl.css('background', '-webkit-linear-gradient( hsl(' + beatEl.index() + ', 100%, 50%), hsl(' + beatEl.index() + ', 100%, 40%) )');
 		}
 	},
 	onBeatMouseOver: function(e) {
@@ -164,7 +167,8 @@ var App = {
 				beats = [],
 				beatElements = track.find('.main-pattern b');
 
-			$.each(beatElements, function(){
+			$.each(beatElements, function(i){
+				console.log(i);
 				beats.push($(this).data('beat'));
 			});
 
