@@ -8,6 +8,7 @@ function createJRemixer(context, jquery, apiKey) {
     $.ajaxSetup({ cache: false });
 
     var remixer = {
+        useFilter: false,
         remixTrackById: function(trackID, trackURL, callback) {
             var track;
             var url = 'http://developer.echonest.com/api/v4/track/profile?format=json&bucket=audio_summary'
@@ -222,19 +223,28 @@ function createJRemixer(context, jquery, apiKey) {
             var curAudioSource = null;
             var currentlyQueued = new Array();
             var curQ = null;
+            var filter;
+            var frequencyVal = 440;
             audioGain.gain.value = 1;
             audioGain.connect(context.destination);
 
             function queuePlay(when, q) {
                 audioGain.gain.value = 1;
+
                 if (isAudioBuffer(q)) {
+                    console.log('buffer');
                     var audioSource = context.createBufferSource();
                     audioSource.buffer = q;
-                    audioSource.connect(audioGain);
+                    if ( remixer.useFilter )
+                        addFilter(audioSource, context);
+                    else
+                        audioSource.connect(audioGain);
+
                     currentlyQueued.push(audioSource);
                     audioSource.noteOn(when);
                     return when;
                 } else if ($.isArray(q)) {
+                    console.log('array');
                     // Correct for load times
                     if (when == 0) {
                         when = context.currentTime;
@@ -244,9 +254,14 @@ function createJRemixer(context, jquery, apiKey) {
                     }
                     return when;
                 } else if (isQuantum(q)) {
+                    console.log('quantum',q);
                     var audioSource = context.createBufferSource();
                     audioSource.buffer = q.track.buffer;
-                    audioSource.connect(audioGain);
+                    if ( remixer.useFilter )
+                        addFilter(audioSource, context);
+                    else
+                        audioSource.connect(audioGain);
+                    
                     q.audioSource = audioSource;
                     currentlyQueued.push(audioSource);
                     audioSource.noteGrainOn(when, q.start, q.duration);
@@ -257,11 +272,32 @@ function createJRemixer(context, jquery, apiKey) {
                 }
             }
 
+            function addFilter( audioSource, context ) {
+                filter = context.createBiquadFilter();
+                // Create the audio graph.
+                audioSource.connect(filter);
+                filter.connect(context.destination);
+                // Create and specify parameters for the low-pass filter.
+                filter.type = 0; // Low-pass filter. See BiquadFilterNode docs
+                filter.gain.value = 1.5;
+                filter.frequency.value = frequencyVal; // Set cutoff to 440 HZ
+            }
+
+            function setFilter( val ) {
+                frequencyVal = val;
+            }
+
             function error(s) {
                 console.log(s);
             }
 
             var player = {
+                useFilter: function(val) {
+                    remixer.useFilter = val;
+                },
+                setFilter: function(val) {
+                    setFilter( val );
+                },
                 play: function(when, q) {
                     return queuePlay(0, q);
                 },

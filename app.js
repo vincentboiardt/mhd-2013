@@ -23,6 +23,19 @@ var App = {
 		$(document).on('click', '.remove', function(){
 			$(this).parent().remove();
 		});
+
+		$(document).on('change', 'input[name=filter]', function(){
+			$(this).parent().data('player').useFilter( $(this).is(':checked') );
+		});
+
+		$(document).on('change', 'input[name=filter_val]', function(){
+			console.log('change', $(this).val() );
+			$(this).parent().data('player').setFilter( $(this).val() );
+		});
+
+		/*$(document).on('mouseover', 'tr[data-spotify]', function(){
+			console.log('spotify', $(this).data('spotify'));
+		});*/
 	},
 	onDrop: function(event, ui) {
 		console.log('dropped', event, ui);
@@ -62,15 +75,24 @@ var App = {
 	},
 	onSearchResults: function(response) {
 		console.log('search', response);
-		var list = $('#result');
+		var list = $('#result tbody');
 
 		list.empty();
 		//$.each(response.response.songs, function(){
 		$.each(response, function(){
 			console.log(this);
-			list.append('<tr><td data-url="' + this.audio_summary.analysis_url + '" data-bpm="' + Math.round( this.audio_summary.tempo ) + '" data-file-id="' + this.file_asset_id + '" data-id="' + this.id + '">' + this.artist + ' - ' + this.title + ', BPM: ' + Math.round( this.audio_summary.tempo ) + '</td></tr>');
+			list.append('<tr data-spotify="' + this.spotify + '"><td>' + Math.round( this.audio_summary.tempo ) + '</td><td data-url="' + this.audio_summary.analysis_url + '" data-bpm="' + Math.round( this.audio_summary.tempo ) + '" data-file-id="' + this.file_asset_id + '" data-id="' + this.id + '">' + this.artist + ' - ' + this.title + '</td></tr>');
 		});
 		list.find('td').draggable({ revert : 'invalid' });
+
+		$('tr[data-spotify]').popover({
+			html: true,
+			trigger: 'click',
+			title: 'Preview',
+			content: function(){
+				return '<iframe src="https://embed.spotify.com/?uri=' + $(this).data('spotify') + '" width="230" height="80" frameborder="0" allowtransparency="true"></iframe>';
+			}
+		});
 	},
 	setBPM: function(bpm) {
 		$('#bpm').val(bpm);
@@ -85,6 +107,8 @@ var App = {
 			'<div class="toggle">v</div>',
 			'<h2>' + obj.text + '</h2>',
 			details,
+			'<input type="checkbox" name="filter">',
+			'<input type="range" name="filter_val" min="0" max="500">',
 			'<button class="remove btn btn-mini btn-danger">Delete</button>'
 		);
 		
@@ -126,8 +150,8 @@ var App = {
 
 		var allBeats = el.find('.all-beats');
 		
-		for (var i = 0; i < el.track.analysis.bars.length; i++) {
-			var beat = el.track.analysis.bars[i],
+		for (var i = 0; i < el.track.analysis.beats.length; i++) {
+			var beat = el.track.analysis.beats[i],
 				beatEl = $('<b></b>')
 				.data('beat', beat)
 				.data('player', el.player)
@@ -149,6 +173,7 @@ var App = {
 	onBeatMouseOver: function(e) {
 		var beat = $(this).data('beat');
 
+		$(this).data('player').stop();
 		$(this).data('player').play(0, beat);
 
 	},
@@ -162,15 +187,25 @@ var App = {
 		el.css('position', '').appendTo( $(this) );
 	},
 	onPlay: function() {
-		$('.track').each(function(){
+		var masterBeats = false;
+
+		$('.track').each(function(i){
 			var track = $(this),
 				beats = [],
 				beatElements = track.find('.main-pattern b');
 
-			$.each(beatElements, function(i){
-				console.log(i);
-				beats.push($(this).data('beat'));
+			$.each(beatElements, function(j){
+				var beat = $(this).data('beat');
+				
+				if ( typeof masterBeats[j] != 'undefined' && beat.duration > masterBeats[j].duration )
+					beat.duration = masterBeats[j].duration;
+				
+				beats.push(beat);
 			});
+
+			if(i === 0) {
+				masterBeats = beats;
+			}
 
 			track.data('player').play(0, beats);
 		});
