@@ -31,8 +31,21 @@ if ( isset( $_GET['access'] ) ) {
 	echo json_encode( $result );
 	exit;
 } elseif ( isset( $_GET['search'] ) ) {
-	$link = mysql_connect( 'localhost', 'root', '' );
-	$db_selected = mysql_select_db( 'mhd', $link );
+	$services_json = json_decode(getenv("VCAP_SERVICES"),true);
+	if ( ! empty( $services_json ) ) {
+		$mysql_config = $services_json["mysql-5.1"][0]["credentials"];
+		$username = $mysql_config["username"];
+		$password = $mysql_config["password"];
+		$hostname = $mysql_config["hostname"];
+		$port = $mysql_config["port"];
+		$db = $mysql_config["name"];
+		$link = mysql_connect("$hostname:$port", $username, $password);
+		$db_selected = mysql_select_db($db, $link);
+
+	} else {
+		$link = mysql_connect( 'localhost', 'root', '' );
+		$db_selected = mysql_select_db( 'mhd', $link );
+	}
 	$term = mysql_real_escape_string( $_GET['search'] );
 	
 	$query = "SELECT MATCH(title,artist_name) AGAINST('$term') AS rel, echonest_id, file_asset_id, title, artist_name FROM emi_bluenote

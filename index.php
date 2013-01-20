@@ -11,7 +11,7 @@
 		<h1>MHD</h1>
 		<form>
 			<p><input type="text" id="search" name="combined" placeholder="Artist and title..." value="mystic brew"></p>
-			<p><input type="text" id="bpm" placeholder="BPM" disabled><input type="hidden" name="bpm"></p>
+			<!--<p><input type="text" id="bpm" placeholder="BPM" disabled><input type="hidden" name="bpm"></p>-->
 			<input type="submit" class="btn-primary btn" value="Search">
 		</form>
 		<table id="result" class="table table-striped">
@@ -25,7 +25,7 @@
 	<div class="sequencer-col">
 		<h1>Sequencer <button class="btn btn-large btn-primary play">Play</button></h1>
 		<div class="tracks">
-			<div class="help">&plus; Drag tracks here</div>
+			<div class="help">&plus; Drag &amp; drop tracks here</div>
 		</div>
 	</div>
 </div>

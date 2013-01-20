@@ -25,17 +25,29 @@ var App = {
 		});
 
 		$(document).on('change', 'input[name=filter]', function(){
-			$(this).parent().data('player').useFilter( $(this).is(':checked') );
+			$(this).parents('.track').data('player').useFilter( $(this).is(':checked') );
 		});
 
 		$(document).on('change', 'input[name=filter_val]', function(){
 			console.log('change', $(this).val() );
-			$(this).parent().data('player').setFilter( $(this).val() );
+			$(this).parents('.track').data('player').setFilter( $(this).val() );
 		});
+	},
+	soundcloudLogin: function() {
+		SC.connect(function() {
+			SC.record({
+				start: function() {
+					$('.play').trigger('click');
 
-		/*$(document).on('mouseover', 'tr[data-spotify]', function(){
-			console.log('spotify', $(this).data('spotify'));
-		});*/
+					window.setTimeout(function() {
+						SC.recordStop();
+						SC.recordUpload({
+							track: { title: 'This is my sound' }
+						});
+					}, 5000);
+				}
+			});
+		});
 	},
 	onDrop: function(event, ui) {
 		console.log('dropped', event, ui);
@@ -83,14 +95,14 @@ var App = {
 			console.log(this);
 			list.append('<tr data-spotify="' + this.spotify + '"><td>' + Math.round( this.audio_summary.tempo ) + '</td><td data-url="' + this.audio_summary.analysis_url + '" data-bpm="' + Math.round( this.audio_summary.tempo ) + '" data-file-id="' + this.file_asset_id + '" data-id="' + this.id + '">' + this.artist + ' - ' + this.title + '</td></tr>');
 		});
-		list.find('td').draggable({ revert : 'invalid' });
+		list.find('td').draggable({ revert : 'invalid', cursor: 'move' });
 
 		$('tr[data-spotify]').popover({
 			html: true,
 			trigger: 'click',
 			title: 'Preview',
 			content: function(){
-				return '<iframe src="https://embed.spotify.com/?uri=' + $(this).data('spotify') + '" width="230" height="80" frameborder="0" allowtransparency="true"></iframe>';
+				return '<iframe src="https://embed.spotify.com/?uri=' + $(this).data('spotify') + '" width="250" height="80" frameborder="0" allowtransparency="true"></iframe>';
 			}
 		});
 	},
@@ -107,8 +119,7 @@ var App = {
 			'<div class="toggle">v</div>',
 			'<h2>' + obj.text + '</h2>',
 			details,
-			'<input type="checkbox" name="filter">',
-			'<input type="range" name="filter_val" min="0" max="500">',
+			'<div class="checkbox">Filter: <input type="checkbox" name="filter"> <input type="range" name="filter_val" min="0" max="500" value="440"></div>',
 			'<button class="remove btn btn-mini btn-danger">Delete</button>'
 		);
 		

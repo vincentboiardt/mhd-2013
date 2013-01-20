@@ -46,7 +46,6 @@ table td {
 	line-height: 100px;
 	font-size: 42px;
 	font-style: italic;
-	text-align: center;
 	color: #bbb;
 }
 
@@ -73,16 +72,21 @@ table td {
 	counter-increment: track;
 	content: counter(track);
 	position: absolute;
-	top: 0;
-	left: 0;
-	width: 50px;
+	top: 5px;
+	left: 5px;
+	width: 40px;
 	font-size: 18px;
-	line-height: 40px;
+	line-height: 25px;
 	text-align: center;
+	box-shadow: inset 1px 1px 5px rgba(0,0,0,.4);
+	background: #888;
+	color: #fff;
+	border-radius: 50px;
 }
 
 .track ~ .track:before {
 	background: none;
+	color: #333;
 }
 
 .toggle {
@@ -137,7 +141,7 @@ table td {
 
 .pattern b:hover {
 	opacity: .5;
-	cursor: pointer;
+	/*cursor: pointer;*/
 }
 
 .main-pattern {
@@ -151,4 +155,8 @@ table td {
 
 .details {
 	/*display: none;*/
+}
+
+.popover {
+	width: 300px;
 }
