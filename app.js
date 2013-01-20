@@ -29,8 +29,19 @@ var App = {
 		});
 
 		$(document).on('change', 'input[name=filter_val]', function(){
-			console.log('change', $(this).val() );
+			//console.log('change', $(this).val() );
 			$(this).parents('.track').data('player').setFilter( $(this).val() );
+		});
+
+		$(document).on('change', 'input[name=gain]', function(){
+			var gainVal = $(this).parents('.track').find('input[name=gain_val]').val();
+
+			$(this).parents('.track').data('player').setGain( $(this).is(':checked') ? gainVal : 1 );
+		});
+
+		$(document).on('change', 'input[name=gain_val]', function(){
+			//console.log('change', $(this).val() );
+			$(this).parents('.track').data('player').setGain( $(this).val() / 100 );
 		});
 	},
 	soundcloudLogin: function() {
@@ -95,16 +106,16 @@ var App = {
 			console.log(this);
 			list.append('<tr data-spotify="' + this.spotify + '"><td>' + Math.round( this.audio_summary.tempo ) + '</td><td data-url="' + this.audio_summary.analysis_url + '" data-bpm="' + Math.round( this.audio_summary.tempo ) + '" data-file-id="' + this.file_asset_id + '" data-id="' + this.id + '">' + this.artist + ' - ' + this.title + '</td></tr>');
 		});
-		list.find('td').draggable({ revert : 'invalid', cursor: 'move' });
+		list.find('td').draggable({ revert : 'invalid' });
 
-		$('tr[data-spotify]').popover({
+		/*$('tr[data-spotify]').popover({
 			html: true,
 			trigger: 'click',
 			title: 'Preview',
 			content: function(){
 				return '<iframe src="https://embed.spotify.com/?uri=' + $(this).data('spotify') + '" width="250" height="80" frameborder="0" allowtransparency="true"></iframe>';
 			}
-		});
+		});*/
 	},
 	setBPM: function(bpm) {
 		$('#bpm').val(bpm);
@@ -118,13 +129,15 @@ var App = {
 			'<div class="pattern main-pattern"></div>',
 			'<div class="toggle">v</div>',
 			'<h2>' + obj.text + '</h2>',
-			details,
+			'<div class="checkbox">Gain: <input type="checkbox" name="gain"> <input type="range" name="gain_val" min="0" max="300" value="0"></div>',
 			'<div class="checkbox">Filter: <input type="checkbox" name="filter"> <input type="range" name="filter_val" min="0" max="500" value="440"></div>',
+			'<div class="checkbox">Offset: <input type="checkbox" name="offset"> <input type="range" name="offset_val" min="0" max="2000" value="1000"></div>',
+			details,
 			'<button class="remove btn btn-mini btn-danger">Delete</button>'
 		);
 		
 		el.find('.pattern:not(.all-beats)')
-		.sortable()
+		.sortable({ axis: 'x', cursor: 'move' })
 		.droppable({
 			drop: App.onBeatDrop,
 			accept: 'b',
@@ -165,6 +178,7 @@ var App = {
 			var beat = el.track.analysis.beats[i],
 				beatEl = $('<b></b>')
 				.data('beat', beat)
+				.data('start', beat.start)
 				.data('player', el.player)
 				//.on('mouseover', App.onBeatMouseOver )
 				//.on('mouseout', App.onBeatMouseOut )
@@ -177,12 +191,22 @@ var App = {
 				});
 
 			allBeats.append(beatEl);
-				
-			beatEl.css('background', '-webkit-linear-gradient( hsl(' + beatEl.index() + ', 100%, 50%), hsl(' + beatEl.index() + ', 100%, 40%) )');
+			
+			var h = ( beatEl.index() * 2 ),
+				l1 = 10 * ( beatEl.index() % 2 == 0 ? 5 : 3 ),
+				l2 = l1 - 10;
+			beatEl.css('background', '-webkit-linear-gradient( hsl(' + h + ', 100%, ' + l1 + '%), hsl(' + h + ', 100%, ' + l2 + '%) )');
 		}
 	},
 	onBeatMouseOver: function(e) {
-		var beat = $(this).data('beat');
+		var beat = $(this).data('beat'),
+			track = $(this).parents('.track'),
+			offset = track.find('input[name=offset]').is(':checked') ? track.find('input[name=offset_val]').val() - 1000 : 0;
+
+		if ( offset ) {
+			beat.start = parseFloat( $(this).data('start') ) + ( offset / 1000 );
+		}
+			
 
 		$(this).data('player').stop();
 		$(this).data('player').play(0, beat);
@@ -193,7 +217,7 @@ var App = {
 		$(this).data('player').stop();
 	},
 	onBeatDrop: function(e, ui) {
-		var el = ui.draggable.clone(true);
+		var el = ui.draggable.clone(true).unbind();
 
 		el.css('position', '').appendTo( $(this) );
 	},
@@ -203,10 +227,18 @@ var App = {
 		$('.track').each(function(i){
 			var track = $(this),
 				beats = [],
-				beatElements = track.find('.main-pattern b');
+				beatElements = track.find('.main-pattern b'),
+				offset = track.find('input[name=offset]').is(':checked') ? track.find('input[name=offset_val]').val() - 1000 : 0;
+
+			console.log('offset', offset);
 
 			$.each(beatElements, function(j){
 				var beat = $(this).data('beat');
+
+				if ( offset ) {
+					console.log('offset ja', $(this).data('start'), offset / 1000 );
+					beat.start = parseFloat( $(this).data('start') ) + ( offset / 1000 );
+				}
 				
 				if ( typeof masterBeats[j] != 'undefined' && beat.duration > masterBeats[j].duration )
 					beat.duration = masterBeats[j].duration;

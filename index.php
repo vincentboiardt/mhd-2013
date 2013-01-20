@@ -10,7 +10,7 @@
 	<div class="search-col nav-bar nav-bar-inverse">
 		<h1>MHD</h1>
 		<form>
-			<p><input type="text" id="search" name="combined" placeholder="Artist and title..." value="mystic brew"></p>
+			<p><input type="text" id="search" name="combined" placeholder="Artist and title..." value="david axelrod edge"></p>
 			<!--<p><input type="text" id="bpm" placeholder="BPM" disabled><input type="hidden" name="bpm"></p>-->
 			<input type="submit" class="btn-primary btn" value="Search">
 		</form>

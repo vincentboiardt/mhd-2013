@@ -225,11 +225,12 @@ function createJRemixer(context, jquery, apiKey) {
             var curQ = null;
             var filter;
             var frequencyVal = 440;
-            audioGain.gain.value = 1;
+            var gainVal = 1;
+            audioGain.gain.value = gainVal;
             audioGain.connect(context.destination);
 
             function queuePlay(when, q) {
-                audioGain.gain.value = 1;
+                audioGain.gain.value = gainVal;
 
                 if (isAudioBuffer(q)) {
                     console.log('buffer');
@@ -279,12 +280,16 @@ function createJRemixer(context, jquery, apiKey) {
                 filter.connect(context.destination);
                 // Create and specify parameters for the low-pass filter.
                 filter.type = 0; // Low-pass filter. See BiquadFilterNode docs
-                filter.gain.value = 1.5;
+                filter.gain.value = gainVal;
                 filter.frequency.value = frequencyVal; // Set cutoff to 440 HZ
             }
 
             function setFilter( val ) {
                 frequencyVal = val;
+            }
+
+            function setGain( val ) {
+                gainVal = val;
             }
 
             function error(s) {
@@ -297,6 +302,9 @@ function createJRemixer(context, jquery, apiKey) {
                 },
                 setFilter: function(val) {
                     setFilter( val );
+                },
+                setGain: function(val) {
+                    setGain( val );
                 },
                 play: function(when, q) {
                     return queuePlay(0, q);

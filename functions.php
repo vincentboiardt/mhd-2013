@@ -26,9 +26,9 @@ if ( isset( $_GET['access'] ) ) {
 		}
 	}
 
-	header( 'Content-type: application/json' );
+	header( 'Content-Type: application/json' );
 
-	echo json_encode( $result );
+	echo json_encode( array_filter( $result ) );
 	exit;
 } elseif ( isset( $_GET['search'] ) ) {
 	$services_json = json_decode(getenv("VCAP_SERVICES"),true);
@@ -50,20 +50,27 @@ if ( isset( $_GET['access'] ) ) {
 	
 	$query = "SELECT MATCH(title,artist_name) AGAINST('$term') AS rel, echonest_id, file_asset_id, title, artist_name FROM emi_bluenote
 	WHERE MATCH(title,artist_name) AGAINST('$term') AND type = 'audio'
-	ORDER BY rel DESC LIMIT 0,10";
+	ORDER BY rel DESC LIMIT 0,15";
 
 	$result = mysql_query( $query );
 	$results = array();
-	$ids = array();
+
 	while ( $row = mysql_fetch_object($result) ) {
-		$track = $echonest->getTrackApi()->profile($row->echonest_id, 'audio_summary');
-		$song = $echonest->getSongApi()->profile($track['track']['song_id'], array( 'tracks', 'id:spotify-WW' ) );
-		$track = $track['track'];
-		$track['spotify'] = str_replace( '-WW', '', @$song[0]['tracks'][0]['foreign_id'] );
-		$track['file_asset_id'] = $row->file_asset_id;
-		$results[] = $track;
+		#$_track = $echonest->getTrackApi()->profile($row->echonest_id, 'audio_summary');
+		#$song = $echonest->getSongApi()->profile($track['track']['song_id'], array( 'tracks', 'id:spotify-WW' ) );
+		#$track = $_track['track'];
+		#$track['spotify'] = str_replace( '-WW', '', @$song[0]['tracks'][0]['foreign_id'] );
+		#$track['file_asset_id'] = $row->file_asset_id;
+		$obj = json_decode( file_get_contents( 'http://developer.echonest.com/api/v4/track/profile?api_key=' . $api_key . '&format=json&id=' . $row->echonest_id . '&bucket=audio_summary' ) );
+		#$song = json_decode( file_get_contents( 'http://developer.echonest.com/api/v4/song/profile?api_key=' . $api_key . '&format=json&id=' . $track->track->song_id . '&bucket=tracks&bucket=id:spotify-WW' ) );
+
+		#$track->track->spotify = str_replace( '-WW', '', $song->response[0] );
+		$obj->response->track->file_asset_id = $row->file_asset_id;
+		$results[] = $obj->response->track;
+
 	}
-	header( 'Content-type: application/json' );
+
+	header( 'Content-Type: application/json' );
 
 	echo json_encode( $results );
 	exit;
