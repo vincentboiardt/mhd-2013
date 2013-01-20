@@ -14,6 +14,7 @@ var App = {
 		}).sortable({ axis: 'y', stop: App.onSort });
 
 		$('.play').on('click', App.onPlay);
+		$('.stop').on('click', App.onStop);
 
 		$(document).on('dblclick', '.main-pattern b', function(){
 			$(this).data('player').stop()
@@ -43,22 +44,16 @@ var App = {
 			//console.log('change', $(this).val() );
 			$(this).parents('.track').data('player').setGain( $(this).val() / 100 );
 		});
-	},
-	soundcloudLogin: function() {
-		SC.connect(function() {
-			SC.record({
-				start: function() {
-					$('.play').trigger('click');
 
-					window.setTimeout(function() {
-						SC.recordStop();
-						SC.recordUpload({
-							track: { title: 'This is my sound' }
-						});
-					}, 5000);
-				}
-			});
+		$(document).on('change', 'input[name=mute]', function(){
+			var track = $(this).parents('.track'),
+				gain = track.find('input[name=gain]'),
+				gainVal = gain.is(':checked') ? track.find('input[name=gain_val]').val() : 1;
+
+			track.data('player').setGain( $(this).is(':checked') ? 0 : gainVal );
 		});
+
+		$('#info').modal();
 	},
 	onDrop: function(event, ui) {
 		console.log('dropped', event, ui);
@@ -132,6 +127,7 @@ var App = {
 			'<div class="checkbox">Gain: <input type="checkbox" name="gain"> <input type="range" name="gain_val" min="0" max="300" value="0"></div>',
 			'<div class="checkbox">Filter: <input type="checkbox" name="filter"> <input type="range" name="filter_val" min="0" max="500" value="440"></div>',
 			'<div class="checkbox">Offset: <input type="checkbox" name="offset"> <input type="range" name="offset_val" min="0" max="2000" value="1000"></div>',
+			'<div class="checkbox">Mute <input type="checkbox" name="mute">',
 			details,
 			'<button class="remove btn btn-mini btn-danger">Delete</button>'
 		);
@@ -251,6 +247,11 @@ var App = {
 			}
 
 			track.data('player').play(0, beats);
+		});
+	},
+	onStop: function() {
+		$('.track').each(function(){
+			$(this).data('player').stop();
 		});
 	}
 };

@@ -89,6 +89,16 @@ table td {
 	color: #333;
 }
 
+.track:after {
+	position: absolute;
+	bottom: 10px;
+	right: 10px;
+	font-size: 18px;
+	line-height: 25px;
+	color: #aaa;
+	content: 'BPM: ' attr(data-bpm);
+}
+
 .toggle {
 	position: absolute;
 	top: 10px;
